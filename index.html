@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MyLog">
+    <title>Journal Santé</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    
+    <style>
+        :root {
+            --bg: #121212;
+            --card: #1e1e1e;
+            --accent: #0a84ff;
+            --text: #ffffff;
+            --text-dim: #a0a0a0;
+            --border: #333;
+            --success: #32d74b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: env(safe-area-inset-top) 15px env(safe-area-inset-bottom) 15px;
+            line-height: 1.5;
+        }
+
+        h1, h2 { font-weight: 700; margin-bottom: 20px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-card { background: var(--card); padding: 15px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
+        .stat-val { display: block; font-size: 24px; font-weight: bold; color: var(--accent); }
+        .stat-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; }
+
+        form { background: var(--card); padding: 20px; border-radius: 16px; margin-bottom: 25px; border: 1px solid var(--border); }
+        .section-title { color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 5px; margin: 20px 0 10px 0; font-size: 0.9rem; text-transform: uppercase; }
+        
+        label { display: block; margin-bottom: 5px; font-size: 0.85rem; color: var(--text-dim); }
+        input[type="text"], input[type="date"], input[type="number"], textarea {
+            width: 100%; padding: 12px; background: #2c2c2e; border: 1px solid var(--border); border-radius: 8px; color: white; margin-bottom: 15px; box-sizing: border-box; font-size: 16px; /* 16px prevent zoom on iOS */
+        }
+
+        .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .check-item { background: #2c2c2e; padding: 10px; border-radius: 8px; display: flex; align-items: center; font-size: 14px; }
+        .check-item input { margin-right: 10px; width: 20px; height: 20px; }
+
+        .btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: 600; font-size: 16px; margin-bottom: 10px; cursor: pointer; transition: opacity 0.2s; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-secondary { background: #3a3a3c; color: white; }
+        .btn-danger { background: #ff453a; color: white; margin-top: 30px; }
+        .btn:active { opacity: 0.7; }
+
+        .history-list { margin-top: 20px; }
+        .history-item { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid var(--accent); display: flex; justify-content: space-between; align-items: center; }
+        .history-date { font-weight: bold; }
+        .history-meta { font-size: 12px; color: var(--text-dim); }
+
+        .score-box { background: linear-gradient(145deg, #1e1e1e, #252525); border: 1px solid var(--accent); color: var(--accent); }
+    </style>
+</head>
+<body>
+
+    <header style="padding: 20px 0;">
+        <h1>Journal Santé</h1>
+        <div class="stats-grid">
+            <div class="stat-card"><span id="streakCount" class="stat-val">0</span><span class="stat-label">Série Jours</span></div>
+            <div class="stat-card"><span id="weekWorkouts" class="stat-val">0</span><span class="stat-label">Sports Semaine</span></div>
+            <div class="stat-card score-box" style="grid-column: span 2;">
+                <span id="weeklyScore" class="stat-val">0</span>
+                <span class="stat-label">Score Bien-être Hebdo</span>
+            </div>
+        </div>
+    </header>
+
+    <form id="healthForm">
+        <label>Date</label>
+        <input type="date" id="logDate" required>
+
+        <div class="section-title">Repas 1</div>
+        <input type="text" id="r1e" placeholder="Entrée">
+        <input type="text" id="r1p" placeholder="Plat">
+        <input type="text" id="r1f" placeholder="Fromage">
+        <input type="text" id="r1d" placeholder="Dessert">
+        <input type="text" id="r1b" placeholder="Boisson">
+
+        <div class="section-title">Repas 2</div>
+        <input type="text" id="r2e" placeholder="Entrée">
+        <input type="text" id="r2p" placeholder="Plat">
+        <input type="text" id="r2f" placeholder="Fromage">
+        <input type="text" id="r2d" placeholder="Dessert">
+        <input type="text" id="r2b" placeholder="Boisson">
+
+        <div class="section-title">Exercices</div>
+        <div class="checkbox-group" id="exercises">
+            <label class="check-item"><input type="checkbox" value="Musculation"> Muscu</label>
+            <label class="check-item"><input type="checkbox" value="Vélo"> Vélo</label>
+            <label class="check-item"><input type="checkbox" value="Kiné"> Kiné</label>
+            <label class="check-item"><input type="checkbox" value="Rugby"> Rugby</label>
+            <label class="check-item"><input type="checkbox" value="Pompes"> Pompes</label>
+            <label class="check-item"><input type="checkbox" value="Gainage"> Gainage</label>
+            <label class="check-item"><input type="checkbox" value="Mobilité"> Mobilité</label>
+            <label class="check-item"><input type="checkbox" value="Marche"> Marche</label>
+            <label class="check-item"><input type="checkbox" value="Slendertone"> Slender</label>
+        </div>
+
+        <div class="section-title">Extras</div>
+        <textarea id="comment" rows="3" placeholder="Commentaire (ex: sommeil 7h)"></textarea>
+        <input type="number" id="weight" step="0.1" placeholder="Poids (kg)">
+
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <button type="button" onclick="resetForm()" class="btn btn-secondary">Effacer formulaire</button>
+    </form>
+
+    <h2>Historique (30j)</h2>
+    <div id="history" class="history-list"></div>
+
+    <button onclick="exportCSV()" class="btn btn-secondary" style="margin-top: 20px;">Exporter en CSV</button>
+    <button onclick="clearAllData()" class="btn btn-danger">Supprimer toutes les données</button>
+
+    <script>
+        const form = document.getElementById('healthForm');
+        const logDateInput = document.getElementById('logDate');
+        
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            logDateInput.valueAsDate = new Date();
+            loadHistory();
+            updateStats();
+            
+            // Register Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js');
+            }
+        });
+
+        // Enregistrement des données
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const date = logDateInput.value;
+            const data = JSON.parse(localStorage.getItem('healthLogs') || '{}');
+            
+            const selectedExercises = Array.from(document.querySelectorAll('#exercises input:checked')).map(i => i.value);
+
+            data[date] = {
+                r1: { e: id('r1e').value, p: id('r1p').value, f: id('r1f').value, d: id('r1d').value, b: id('r1b').value },
+                r2: { e: id('r2e').value, p: id('r2p').value, f: id('r2f').value, d: id('r2d').value, b: id('r2b').value },
+                exercises: selectedExercises,
+                comment: id('comment').value,
+                weight: id('weight').value
+            };
+
+            localStorage.setItem('healthLogs', JSON.stringify(data));
+            alert('Enregistré !');
+            loadHistory();
+            updateStats();
+        });
+
+        function id(name) { return document.getElementById(name); }
+
+        function loadHistory() {
+            const data = JSON.parse(localStorage.getItem('healthLogs') || '{}');
+            const container = id('history');
+            container.innerHTML = '';
+            
+            const sortedDates = Object.keys(data).sort().reverse().slice(0, 30);
+            
+            sortedDates.forEach(date => {
+                const entry = data[date];
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.onclick = () => loadEntry(date);
+                div.innerHTML = `
+                    <div>
+                        <div class="history-date">${date}</div>
+                        <div class="history-meta">${entry.exercises.length} sports • ${entry.weight ? entry.weight+'kg' : '---'}</div>
+                    </div>
+                    <span style="color: var(--accent)">➔</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function loadEntry(date) {
+            const data = JSON.parse(localStorage.getItem('healthLogs'))[date];
+            logDateInput.value = date;
+            id('r1e').value = data.r1.e; id('r1p').value = data.r1.p; id('r1f').value = data.r1.f; id('r1d').value = data.r1.d; id('r1b').value = data.r1.b;
+            id('r2e').value = data.r2.e; id('r2p').value = data.r2.p; id('r2f').value = data.r2.f; id('r2d').value = data.r2.d; id('r2b').value = data.r2.b;
+            id('comment').value = data.comment;
+            id('weight').value = data.weight || '';
+            
+            document.querySelectorAll('#exercises input').forEach(cb => {
+                cb.checked = data.exercises.includes(cb.value);
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateStats() {
+            const data = JSON.parse(localStorage.getItem('healthLogs') || '{}');
+            const dates = Object.keys(data).sort();
+            
+            // Série de jours
+            let streak = 0;
+            let today = new Date();
+            today.setHours(0,0,0,0);
+            for(let i = 0; i < 100; i++) {
+                let d = new Date(today);
+                d.setDate(d.getDate() - i);
+                if(data[d.toISOString().split('T')[0]]) streak++; else break;
+            }
+            id('streakCount').innerText = streak;
+
+            // Stats Hebdo (7 derniers jours)
+            let workouts = 0;
+            let score = 0;
+            let now = new Date();
+            for(let i = 0; i < 7; i++) {
+                let d = new Date(now);
+                d.setDate(d.getDate() - i);
+                let dateStr = d.toISOString().split('T')[0];
+                let entry = data[dateStr];
+                
+                if(entry) {
+                    workouts += entry.exercises.length;
+                    score += entry.exercises.length; // +1 par séance
+                    
+                    // Bonus boisson (si pas de "vin", "bière", "alcool" dans les champs boisson)
+                    const drinks = (entry.r1.b + entry.r2.b).toLowerCase();
+                    if(!drinks.includes('vin') && !drinks.includes('bière') && !drinks.includes('alcool')) score += 1;
+                    
+                    // Bonus sommeil
+                    if(entry.comment.toLowerCase().includes('sommeil 7h')) score += 1;
+                }
+            }
+            id('weekWorkouts').innerText = workouts;
+            id('weeklyScore').innerText = score;
+        }
+
+        function resetForm() {
+            form.reset();
+            logDateInput.valueAsDate = new Date();
+        }
+
+        function clearAllData() {
+            if(confirm("Tout supprimer ?")) {
+                localStorage.removeItem('healthLogs');
+                location.reload();
+            }
+        }
+
+        function exportCSV() {
+            const data = JSON.parse(localStorage.getItem('healthLogs') || '{}');
+            let csv = "Date;Repas1;Repas2;Sports;Poids;Commentaire\n";
+            Object.keys(data).sort().forEach(date => {
+                const e = data[date];
+                csv += `${date};${Object.values(e.r1).join(',')};${Object.values(e.r2).join(',')};${e.exercises.join('|')};${e.weight};${e.comment}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'journal-sante.csv');
+            a.click();
+        }
+    </script>
+</body>
+</html>
