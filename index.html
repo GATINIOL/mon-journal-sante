@@ -4,208 +4,264 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>MyLog Ultra</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>BIM Santé - Benjamin</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --accent: #0a84ff; --text: #fff; --border: #38383a; --success: #32d74b; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; }
+        :root {
+            /* Mode Jour par défaut */
+            --bg: #f2f2f7;
+            --card: #ffffff;
+            --text: #1c1c1e;
+            --text-dim: #8e8e93;
+            --accent: #0a84ff;
+            --bim-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); /* Inspiré du logo */
+            --border: #e5e5ea;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #000000;
+                --card: #1c1c1e;
+                --text: #ffffff;
+                --text-dim: #8e8e93;
+                --border: #38383a;
+            }
+        }
+
+        body { font-family: -apple-system, system-ui; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; transition: all 0.3s ease; }
         
-        /* Navigation par Onglets */
-        .tab-content { display: none; padding: 20px 15px; }
+        /* Header & Logo */
+        .header { padding: 40px 20px 20px; text-align: center; background: var(--card); border-bottom: 1px solid var(--border); }
+        .logo-img { width: 120px; margin-bottom: 10px; border-radius: 15px; }
+        
+        /* Widgets */
+        .tab-content { display: none; padding: 15px; animation: fadeIn 0.4s; }
         .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .widget { background: var(--card); padding: 20px; border-radius: 20px; margin-bottom: 20px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .widget h3 { margin: 0 0 15px 0; font-size: 1.2rem; }
+
+        /* Goal Form */
+        .goal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .goal-input { background: var(--bg); padding: 10px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
+        .goal-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; display: block; }
+
+        /* Chart */
+        canvas { width: 100% !important; height: 200px !important; }
+
+        /* Saisie UI */
+        .meal-card { background: var(--card); border-radius: 18px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); }
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
+        input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--accent); }
         
-        .nav-bar { position: fixed; bottom: 0; width: 100%; background: rgba(28,28,30,0.95); backdrop-filter: blur(10px); display: flex; border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); z-index: 1000; }
-        .nav-item { flex: 1; text-align: center; padding: 15px; color: var(--text-dim); font-size: 12px; cursor: pointer; }
+        select, input[type="text"], input[type="date"], textarea { 
+            width: 100%; padding: 14px; background: var(--bg); border: 1px solid var(--border); 
+            border-radius: 12px; color: var(--text); font-size: 16px; margin-top: 8px; box-sizing: border-box;
+        }
+
+        /* Navigation */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: var(--card); backdrop-filter: blur(15px); display: flex; border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); z-index: 1000; }
+        .nav-item { flex: 1; text-align: center; padding: 15px; color: var(--text-dim); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
 
-        /* Styles Graphiques & Cartes */
-        .section { background: var(--card); padding: 15px; border-radius: 14px; margin-bottom: 15px; border: 1px solid var(--border); }
-        h2 { color: var(--text); margin-left: 5px; }
-        canvas { background: var(--card); border-radius: 12px; width: 100%; height: 180px; margin-bottom: 15px; }
-
-        /* Formulaire */
-        .meal-toggle { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #2c2c2e; }
-        .details-box { display: none; padding: 10px; background: #2c2c2e; border-radius: 8px; margin-top: 5px; }
-        select, input, textarea { width: 100%; padding: 12px; background: #3a3a3c; border: 1px solid var(--border); border-radius: 8px; color: white; font-size: 16px; margin-bottom: 8px; box-sizing: border-box; }
-        .row { display: flex; gap: 8px; }
-        
-        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 700; font-size: 17px; background: var(--accent); color: white; margin-top: 10px; }
-        
-        .history-card { background: var(--card); padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1px solid var(--border); font-size: 14px; }
+        .btn-bim { 
+            background: var(--bim-gradient); color: white; border: none; padding: 18px; 
+            border-radius: 15px; width: 100%; font-weight: 800; font-size: 18px; margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(10, 132, 255, 0.3);
+        }
     </style>
 </head>
 <body>
 
+    <div class="header">
+        <img src="icons/icon-512.png" class="logo-img" alt="BIM Logo">
+        <h1 style="margin:0; font-size: 1.5rem;">Bienvenue, Benjamin</h1>
+    </div>
+
     <div id="tab-home" class="tab-content active">
-        <h2>Évolution</h2>
-        <canvas id="weightChart"></canvas>
-        
-        <div class="section">
-            <h3>Dernières saisies</h3>
-            <div id="historyList"></div>
+        <div class="widget">
+            <h3>🎯 Mes Objectifs</h3>
+            <div class="goal-grid">
+                <div class="goal-input">
+                    <span class="goal-label">Départ</span>
+                    <input type="number" id="startWeight" placeholder="0" step="0.1" style="width:60px; border:none; background:none; text-align:center; font-weight:bold; font-size:1.2rem;">
+                </div>
+                <div class="goal-input">
+                    <span class="goal-label">Cible</span>
+                    <input type="number" id="targetWeight" placeholder="0" step="0.1" style="width:60px; border:none; background:none; text-align:center; font-weight:bold; font-size:1.2rem; color:var(--success);">
+                </div>
+            </div>
+            <button class="btn-bim" onclick="saveGoals()" style="font-size: 12px; padding: 8px; margin-top: 15px;">Mettre à jour objectifs</button>
+        </div>
+
+        <div class="widget">
+            <h3>📈 Courbe de Poids</h3>
+            <canvas id="weightChart"></canvas>
+        </div>
+
+        <div id="lastEntry" class="widget" style="background: var(--bim-gradient); color:white; border:none;">
+            <h3 style="color:white">Dernière Saisie</h3>
+            <div id="quickStats">Chargement...</div>
         </div>
     </div>
 
     <div id="tab-log" class="tab-content">
-        <h2>Nouvelle Saisie</h2>
-        <form id="proForm">
-            <div class="section">
+        <form id="bimForm">
+            <div class="meal-card">
+                <h3>📅 Date & Sommeil</h3>
                 <input type="date" id="logDate" required>
                 <select id="sleepTime">
-                    <option value="">Durée Sommeil...</option>
-                    ${[4,5,6,7,8,9,10].map(h => `<option value="${h}">${h} heures</option>`).join('')}
+                    <option value="">Sommeil...</option>
+                    <option value="6">6h ou moins</option>
+                    <option value="7">7h</option>
+                    <option value="8">8h</option>
+                    <option value="9">9h+</option>
                 </select>
             </div>
 
             <div id="mealSections"></div>
 
-            <div class="section">
-                <h3>Exercices</h3>
+            <div class="meal-card">
+                <h3>💪 Sport du jour</h3>
                 <div id="exerciseList"></div>
             </div>
 
-            <div class="section">
-                <h3>Poids</h3>
-                <div class="row">
-                    <select id="weightKilo"></select>
-                    <select id="weightGram"></select>
+            <div class="meal-card">
+                <h3>⚖️ Poids Actuel</h3>
+                <div style="display: flex; gap:10px;">
+                    <select id="wK" style="flex:2"></select>
+                    <select id="wG" style="flex:1"></select>
                 </div>
             </div>
 
-            <textarea id="comment" placeholder="Notes..."></textarea>
-            <button type="submit" class="btn">Enregistrer</button>
+            <textarea id="comment" placeholder="Commentaires..."></textarea>
+            <button type="submit" class="btn-bim">ENREGISTRER</button>
         </form>
     </div>
 
-    <div class="nav-bar">
+    <nav class="nav-bar">
         <div class="nav-item active" onclick="switchTab('home')">🏠 Accueil</div>
         <div class="nav-item" onclick="switchTab('log')">➕ Saisir</div>
-    </div>
+    </nav>
 
     <script>
-        // --- CONFIGURATION ---
-        const meals = ['Petit-Déjeuner', 'Déjeuner', 'Dîner'];
-        const types = ['Entrée', 'Plat', 'Fromage', 'Salade', 'Dessert', 'Boisson'];
-        const aliments = {
-            'Entrée': ['Saucisson', 'Paté'],
-            'Plat': ['Veau', 'Agneau', 'Thon', 'Saumon', 'Poulet', 'Steak', 'Œufs', 'Pâtes', 'Riz', 'Légumes'],
-            'Fromage': ['Comte', 'Chinois', 'Cancoillote'],
-            'Boisson': ['Eau', 'Bière', 'Vin rouge'],
-            'Salade': ['Verte', 'Tomates', 'Mixte'],
-            'Dessert': ['Fruit', 'Yaourt', 'Chocolat']
+        const config = {
+            meals: ['Petit-Déjeuner', 'Déjeuner', 'Dîner'],
+            types: ['Entrée', 'Plat', 'Fromage', 'Salade', 'Dessert', 'Boisson'],
+            aliments: {
+                'Entrée': ['Saucisson', 'Paté'],
+                'Plat': ['Veau', 'Agneau', 'Thon', 'Saumon', 'Poulet', 'Steak', 'Œufs', 'Pâtes', 'Riz', 'Légumes'],
+                'Fromage': ['Comte', 'Chinois', 'Cancoillote'],
+                'Boisson': ['Eau', 'Bière', 'Vin rouge']
+            },
+            exercises: [
+                {id:'muscu', l:'Musculation'}, {id:'pompes', l:'Pompes'}, {id:'rugby', l:'Rugby'}, {id:'marche', l:'Marche'}
+            ]
         };
-        const quantites = {
-            'Entrée': ['50g', '100g', '150g'],
-            'Plat': ['50g', '100g', '200g', '300g'],
-            'Fromage': ['1 tranche', '2 tranches'],
-            'Boisson': ['15cl', '20cl', '1L'],
-            'Default': ['Petite', 'Moyenne', 'Grande']
-        };
-        const exercises = [
-            {id:'muscu', label:'Musculation', opts:['15min','30min','45min','1h']},
-            {id:'pompes', label:'Pompes', opts:['10','20','30','40','50']},
-            {id:'velo', label:'Vélo', opts:['20min','40min','1h']},
-            {id:'rugby', label:'Rugby', opts:['20min','40min','1h']},
-            {id:'marche', label:'Marche', opts:['2km','5km','10km']}
-        ];
 
-        // --- NAVIGATION ---
-        function switchTab(tabId) {
+        function switchTab(id) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active');
+            document.getElementById('tab-' + id).classList.add('active');
             event.currentTarget.classList.add('active');
-            if(tabId === 'home') renderHome();
+            if(id === 'home') initHome();
         }
 
-        // --- GENERATION FORMULAIRE ---
         document.addEventListener('DOMContentLoaded', () => {
-            const mealContainer = document.getElementById('mealSections');
-            meals.forEach(m => {
-                let html = `<div class="section"><h3>${m}</h3>`;
-                types.forEach(t => {
-                    const qList = quantites[t] || quantites['Default'];
-                    const aList = aliments[t] || ['Standard'];
-                    html += `
-                        <div class="meal-toggle"><span>${t}</span><input type="checkbox" onclick="toggleDetails('${m}-${t}', this.checked)"></div>
-                        <div class="details-box" id="box-${m}-${t}">
-                            <div class="row">
-                                <select id="sel-${m}-${t}"><option value="">Choix...</option>${aList.map(a => `<option value="${a}">${a}</option>`).join('')}</select>
-                                <select id="qty-${m}-${t}"><option value="">Qté...</option>${qList.map(q => `<option value="${q}">${q}</option>`).join('')}</select>
-                            </div>
-                        </div>`;
+            // Build Meals
+            const container = document.getElementById('mealSections');
+            config.meals.forEach(m => {
+                let h = `<div class="meal-card"><h3>${m}</h3>`;
+                config.types.forEach(t => {
+                    h += `<div class="toggle-row"><span>${t}</span><input type="checkbox" id="chk-${m}-${t}" onchange="toggleBox('${m}-${t}')"></div>
+                          <div id="box-${m}-${t}" style="display:none; margin-bottom:10px;">
+                            <select id="sel-${m}-${t}"><option value="">Aliment...</option>${(config.aliments[t]||['Autre']).map(a=>`<option>${a}</option>`).join('')}</select>
+                          </div>`;
                 });
-                mealContainer.innerHTML += html + `</div>`;
+                container.innerHTML += h + `</div>`;
             });
 
-            const exContainer = document.getElementById('exerciseList');
-            exercises.forEach(ex => {
-                exContainer.innerHTML += `
-                    <div class="meal-toggle"><span>${ex.label}</span>
-                    <select id="ex-${ex.id}" style="width:120px; margin:0"><option value="">0</option>${ex.opts.map(o => `<option value="${o}">${o}</option>`).join('')}</select></div>`;
+            // Build Exercises
+            const exList = document.getElementById('exerciseList');
+            config.exercises.forEach(ex => {
+                exList.innerHTML += `<div class="toggle-row"><span>${ex.l}</span><select id="ex-${ex.id}" style="width:100px; margin:0"><option value="">Non</option><option>Oui</option></select></div>`;
             });
 
-            for(let i=60; i<=120; i++) document.getElementById('weightKilo').innerHTML += `<option value="${i}">${i} kg</option>`;
-            for(let i=0; i<=9; i++) document.getElementById('weightGram').innerHTML += `<option value="${i}">,${i}</option>`;
+            // Build Weight Selects
+            for(let i=60; i<=130; i++) document.getElementById('wK').innerHTML += `<option value="${i}">${i} kg</option>`;
+            for(let i=0; i<=9; i++) document.getElementById('wG').innerHTML += `<option value="${i}">,${i}</option>`;
+
+            // Load Goals
+            document.getElementById('startWeight').value = localStorage.getItem('bimStart') || 80;
+            document.getElementById('targetWeight').value = localStorage.getItem('bimTarget') || 75;
             
             document.getElementById('logDate').valueAsDate = new Date();
-            renderHome();
+            initHome();
         });
 
-        function toggleDetails(id, show) { document.getElementById('box-' + id).style.display = show ? 'block' : 'none'; }
+        function toggleBox(id) { document.getElementById('box-'+id).style.display = document.getElementById('chk-'+id).checked ? 'block' : 'none'; }
 
-        // --- DATA & DASHBOARD ---
-        document.getElementById('proForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const date = document.getElementById('logDate').value;
-            const data = JSON.parse(localStorage.getItem('healthLogsV3') || '{}');
-            
-            const entry = {
-                weight: document.getElementById('weightKilo').value + '.' + document.getElementById('weightGram').value,
-                sleep: document.getElementById('sleepTime').value,
-                comment: document.getElementById('comment').value,
-                timestamp: Date.now()
-            };
+        function saveGoals() {
+            localStorage.setItem('bimStart', document.getElementById('startWeight').value);
+            localStorage.setItem('bimTarget', document.getElementById('targetWeight').value);
+            alert("Objectifs enregistrés !");
+            initHome();
+        }
 
-            data[date] = entry;
-            localStorage.setItem('healthLogsV3', JSON.stringify(data));
-            alert("Enregistré !");
-            switchTab('home');
-        });
-
-        function renderHome() {
-            const data = JSON.parse(localStorage.getItem('healthLogsV3') || '{}');
-            const historyList = document.getElementById('historyList');
-            const sortedDates = Object.keys(data).sort().reverse().slice(0, 7);
-            
-            historyList.innerHTML = sortedDates.map(d => `
-                <div class="history-card"><strong>${d}</strong> : ${data[d].weight} kg | Sommeil: ${data[d].sleep}h</div>
-            `).join('') || "Aucune donnée";
-
+        function initHome() {
+            const data = JSON.parse(localStorage.getItem('bimLogs') || '{}');
+            const dates = Object.keys(data).sort();
+            if(dates.length > 0) {
+                const last = data[dates[dates.length-1]];
+                document.getElementById('quickStats').innerHTML = `Dernier poids : <b>${last.weight} kg</b><br>Sommeil : ${last.sleep}h`;
+            }
             renderChart(data);
         }
 
         function renderChart(data) {
             const canvas = document.getElementById('weightChart');
             const ctx = canvas.getContext('2d');
-            const sortedDates = Object.keys(data).sort().slice(-10);
-            const weights = sortedDates.map(d => parseFloat(data[d].weight));
-            
-            if(weights.length < 2) return;
+            const dates = Object.keys(data).sort().slice(-7);
+            const weights = dates.map(d => parseFloat(data[d].weight));
+            const target = parseFloat(localStorage.getItem('bimTarget') || 0);
+
             ctx.clearRect(0,0,canvas.width,canvas.height);
+            if(weights.length < 2) return;
+
+            const min = Math.min(...weights, target) - 1;
+            const max = Math.max(...weights) + 1;
+
             ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 4; ctx.beginPath();
-            const minW = Math.min(...weights) - 1;
-            const maxW = Math.max(...weights) + 1;
-            
             weights.forEach((w, i) => {
-                const x = (i / (weights.length-1)) * (canvas.width - 40) + 20;
-                const y = canvas.height - ((w - minW) / (maxW - minW)) * (canvas.height - 40) - 20;
+                const x = (i / (weights.length-1)) * canvas.width;
+                const y = canvas.height - ((w - min) / (max - min)) * canvas.height;
                 if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
             });
             ctx.stroke();
+            
+            // Target line
+            ctx.setLineDash([5, 5]); ctx.strokeStyle = '#32d74b'; ctx.beginPath();
+            const targetY = canvas.height - ((target - min) / (max - min)) * canvas.height;
+            ctx.moveTo(0, targetY); ctx.lineTo(canvas.width, targetY); ctx.stroke();
+            ctx.setLineDash([]);
         }
+
+        document.getElementById('bimForm').onsubmit = (e) => {
+            e.preventDefault();
+            const date = document.getElementById('logDate').value;
+            const entry = {
+                weight: document.getElementById('wK').value + '.' + document.getElementById('wG').value,
+                sleep: document.getElementById('sleepTime').value,
+                comment: document.getElementById('comment').value
+            };
+            const all = JSON.parse(localStorage.getItem('bimLogs') || '{}');
+            all[date] = entry;
+            localStorage.setItem('bimLogs', JSON.stringify(all));
+            switchTab('home');
+        };
     </script>
 </body>
 </html>
