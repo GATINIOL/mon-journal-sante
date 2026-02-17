@@ -5,161 +5,116 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>BIM Santé - Benjamin</title>
+    <title>BIM Santé Ultra</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <style>
         :root {
-            /* Mode Jour par défaut */
-            --bg: #f2f2f7;
-            --card: #ffffff;
-            --text: #1c1c1e;
-            --text-dim: #8e8e93;
-            --accent: #0a84ff;
-            --bim-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); /* Inspiré du logo */
-            --border: #e5e5ea;
+            --bg: #f2f2f7; --card: #ffffff; --text: #1c1c1e; --text-dim: #8e8e93;
+            --accent: #0a84ff; --bim-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --border: #e5e5ea; --success: #34c759;
         }
-
         @media (prefers-color-scheme: dark) {
-            :root {
-                --bg: #000000;
-                --card: #1c1c1e;
-                --text: #ffffff;
-                --text-dim: #8e8e93;
-                --border: #38383a;
-            }
+            :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; }
         }
 
-        body { font-family: -apple-system, system-ui; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; transition: all 0.3s ease; }
-        
-        /* Header & Logo */
+        body { font-family: -apple-system, system-ui; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; }
         .header { padding: 40px 20px 20px; text-align: center; background: var(--card); border-bottom: 1px solid var(--border); }
-        .logo-img { width: 120px; margin-bottom: 10px; border-radius: 15px; }
+        .logo-img { width: 80px; border-radius: 12px; margin-bottom: 10px; }
         
-        /* Widgets */
-        .tab-content { display: none; padding: 15px; animation: fadeIn 0.4s; }
+        .tab-content { display: none; padding: 15px; animation: fadeIn 0.3s; }
         .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .widget { background: var(--card); padding: 20px; border-radius: 20px; margin-bottom: 20px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .widget h3 { margin: 0 0 15px 0; font-size: 1.2rem; }
+        .widget, .meal-card { background: var(--card); padding: 20px; border-radius: 20px; margin-bottom: 15px; border: 1px solid var(--border); }
+        h3 { margin: 0 0 15px 0; font-size: 1.1rem; color: var(--accent); }
 
-        /* Goal Form */
-        .goal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .goal-input { background: var(--bg); padding: 10px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
-        .goal-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; display: block; }
+        /* Form Logic Styles */
+        .sub-section { margin: 10px 0; padding-left: 15px; border-left: 2px solid var(--accent); display: none; }
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .multi-select { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .chip { background: var(--bg); border: 1px solid var(--border); padding: 8px; border-radius: 8px; font-size: 13px; text-align: center; }
+        .chip input { display: none; }
+        .chip input:checked + span { color: var(--accent); font-weight: bold; }
 
-        /* Chart */
-        canvas { width: 100% !important; height: 200px !important; }
-
-        /* Saisie UI */
-        .meal-card { background: var(--card); border-radius: 18px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); }
-        .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
-        input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--accent); }
-        
-        select, input[type="text"], input[type="date"], textarea { 
+        select, input, textarea { 
             width: 100%; padding: 14px; background: var(--bg); border: 1px solid var(--border); 
             border-radius: 12px; color: var(--text); font-size: 16px; margin-top: 8px; box-sizing: border-box;
         }
 
-        /* Navigation */
-        .nav-bar { position: fixed; bottom: 0; width: 100%; background: var(--card); backdrop-filter: blur(15px); display: flex; border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); z-index: 1000; }
-        .nav-item { flex: 1; text-align: center; padding: 15px; color: var(--text-dim); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { flex: 1; text-align: center; padding: 15px; color: var(--text-dim); font-size: 10px; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
-
-        .btn-bim { 
-            background: var(--bim-gradient); color: white; border: none; padding: 18px; 
-            border-radius: 15px; width: 100%; font-weight: 800; font-size: 18px; margin-top: 10px;
-            box-shadow: 0 4px 15px rgba(10, 132, 255, 0.3);
-        }
+        .btn-bim { background: var(--bim-gradient); color: white; border: none; padding: 18px; border-radius: 15px; width: 100%; font-weight: 800; font-size: 18px; margin-top: 15px; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <img src="icons/icon-512.png" class="logo-img" alt="BIM Logo">
-        <h1 style="margin:0; font-size: 1.5rem;">Bienvenue, Benjamin</h1>
+        <img src="icons/icon-512.png" class="logo-img">
+        <h1 style="margin:0; font-size: 1.2rem;">BIM SANTÉ — BENJAMIN</h1>
     </div>
 
     <div id="tab-home" class="tab-content active">
         <div class="widget">
-            <h3>🎯 Mes Objectifs</h3>
-            <div class="goal-grid">
-                <div class="goal-input">
-                    <span class="goal-label">Départ</span>
-                    <input type="number" id="startWeight" placeholder="0" step="0.1" style="width:60px; border:none; background:none; text-align:center; font-weight:bold; font-size:1.2rem;">
-                </div>
-                <div class="goal-input">
-                    <span class="goal-label">Cible</span>
-                    <input type="number" id="targetWeight" placeholder="0" step="0.1" style="width:60px; border:none; background:none; text-align:center; font-weight:bold; font-size:1.2rem; color:var(--success);">
-                </div>
-            </div>
-            <button class="btn-bim" onclick="saveGoals()" style="font-size: 12px; padding: 8px; margin-top: 15px;">Mettre à jour objectifs</button>
+            <h3>📈 Suivi de Progression</h3>
+            <canvas id="weightChart" style="width:100%; height:180px;"></canvas>
         </div>
-
-        <div class="widget">
-            <h3>📈 Courbe de Poids</h3>
-            <canvas id="weightChart"></canvas>
-        </div>
-
-        <div id="lastEntry" class="widget" style="background: var(--bim-gradient); color:white; border:none;">
-            <h3 style="color:white">Dernière Saisie</h3>
-            <div id="quickStats">Chargement...</div>
-        </div>
+        <div id="history" class="widget"><h3>Historique</h3><div id="historyContent"></div></div>
     </div>
 
     <div id="tab-log" class="tab-content">
-        <form id="bimForm">
+        <form id="ultraForm">
             <div class="meal-card">
-                <h3>📅 Date & Sommeil</h3>
+                <h3>😴 Repos</h3>
                 <input type="date" id="logDate" required>
-                <select id="sleepTime">
-                    <option value="">Sommeil...</option>
-                    <option value="6">6h ou moins</option>
-                    <option value="7">7h</option>
-                    <option value="8">8h</option>
-                    <option value="9">9h+</option>
-                </select>
+                <input type="number" id="sleepHours" placeholder="Heures de sommeil (ex: 7.5)" step="0.5">
             </div>
 
-            <div id="mealSections"></div>
+            <div id="foodContainer"></div>
 
             <div class="meal-card">
-                <h3>💪 Sport du jour</h3>
-                <div id="exerciseList"></div>
+                <h3>🏃 Sport & Activité</h3>
+                <div id="sportContainer"></div>
             </div>
 
             <div class="meal-card">
-                <h3>⚖️ Poids Actuel</h3>
-                <div style="display: flex; gap:10px;">
+                <h3>⚖️ Poids du jour</h3>
+                <div style="display:flex; align-items:center; gap:10px;">
                     <select id="wK" style="flex:2"></select>
+                    <span style="font-size:2rem; font-weight:bold;">,</span>
                     <select id="wG" style="flex:1"></select>
                 </div>
             </div>
 
-            <textarea id="comment" placeholder="Commentaires..."></textarea>
-            <button type="submit" class="btn-bim">ENREGISTRER</button>
+            <textarea id="comment" placeholder="Notes libres..."></textarea>
+            <button type="submit" class="btn-bim">SAUVEGARDER MA JOURNÉE</button>
         </form>
     </div>
 
     <nav class="nav-bar">
-        <div class="nav-item active" onclick="switchTab('home')">🏠 Accueil</div>
-        <div class="nav-item" onclick="switchTab('log')">➕ Saisir</div>
+        <div class="nav-item active" onclick="switchTab('home')">🏠 ACCUEIL</div>
+        <div class="nav-item" onclick="switchTab('log')">➕ SAISIR</div>
     </nav>
 
     <script>
-        const config = {
+        const DB = {
             meals: ['Petit-Déjeuner', 'Déjeuner', 'Dîner'],
-            types: ['Entrée', 'Plat', 'Fromage', 'Salade', 'Dessert', 'Boisson'],
-            aliments: {
-                'Entrée': ['Saucisson', 'Paté'],
-                'Plat': ['Veau', 'Agneau', 'Thon', 'Saumon', 'Poulet', 'Steak', 'Œufs', 'Pâtes', 'Riz', 'Légumes'],
-                'Fromage': ['Comte', 'Chinois', 'Cancoillote'],
-                'Boisson': ['Eau', 'Bière', 'Vin rouge']
+            categories: {
+                'Entrée': ['Crudités', 'Charcuterie', 'Soupe', 'Salade composée'],
+                'Plat': ['Protéines', 'Légumes', 'Féculents', 'Pain'],
+                'Fromage': ['Pâte dure', 'Pâte molle', 'Fromage frais'],
+                'Dessert': ['Fruit', 'Laitage', 'Pâtisserie', 'Chocolat'],
+                'Boisson': ['Eau', 'Alcool', 'Soda / Jus', 'Café / Thé']
             },
-            exercises: [
-                {id:'muscu', l:'Musculation'}, {id:'pompes', l:'Pompes'}, {id:'rugby', l:'Rugby'}, {id:'marche', l:'Marche'}
-            ]
+            items: {
+                'Protéines': ['Poulet', 'Dinde', 'Veau', 'Bœuf (Steak)', 'Bœuf (Rôti)', 'Agneau', 'Porc', 'Thon', 'Saumon', 'Cabillaud', 'Crevettes', 'Œufs (2)', 'Œufs (3)', 'Tofu', 'Jambon blanc', 'Jambon cru'],
+                'Légumes': ['Brocolis', 'Haricots verts', 'Épinards', 'Courgettes', 'Carottes', 'Asperges', 'Aubergines', 'Poivrons', 'Salade verte', 'Tomates', 'Chou-fleur', 'Petits pois'],
+                'Féculents': ['Riz complet', 'Pâtes', 'Quinoa', 'Pommes de terre', 'Lentilles', 'Pois chiches', 'Boulgour'],
+                'Pain': ['1 morceau', '2 morceaux', '1/2 baguette', '1 baguette', 'Pain complet', 'Pain de mie (2 tr)'],
+                'Alcool': ['Vin rouge (1v)', 'Vin blanc (1v)', 'Bière (25cl)', 'Bière (50cl)', 'Champagne', 'Whisky/Pastis'],
+                'Sport': ['Musculation', 'Course à pied', 'Rugby (Entraînement)', 'Rugby (Match)', 'Marche active', 'Vélo', 'Natation', 'Squash']
+            }
         };
 
         function switchTab(id) {
@@ -167,100 +122,60 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById('tab-' + id).classList.add('active');
             event.currentTarget.classList.add('active');
-            if(id === 'home') initHome();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Build Meals
-            const container = document.getElementById('mealSections');
-            config.meals.forEach(m => {
-                let h = `<div class="meal-card"><h3>${m}</h3>`;
-                config.types.forEach(t => {
-                    h += `<div class="toggle-row"><span>${t}</span><input type="checkbox" id="chk-${m}-${t}" onchange="toggleBox('${m}-${t}')"></div>
-                          <div id="box-${m}-${t}" style="display:none; margin-bottom:10px;">
-                            <select id="sel-${m}-${t}"><option value="">Aliment...</option>${(config.aliments[t]||['Autre']).map(a=>`<option>${a}</option>`).join('')}</select>
-                          </div>`;
+            // Build Food Sections
+            const fCont = document.getElementById('foodContainer');
+            DB.meals.forEach(m => {
+                let h = `<div class="meal-card"><h3>🍴 ${m}</h3>`;
+                Object.keys(DB.categories).forEach(cat => {
+                    h += `
+                        <div class="toggle-row"><span>${cat}</span><input type="checkbox" onchange="toggle('sub-${m}-${cat}', this.checked)"></div>
+                        <div id="sub-${m}-${cat}" class="sub-section">
+                            <div class="multi-select">
+                                ${(DB.items[cat] || DB.categories[cat]).map(item => `
+                                    <label class="chip"><input type="checkbox"><span>${item}</span></label>
+                                `).join('')}
+                            </div>
+                            ${cat === 'Plat' ? `
+                                <div style="margin-top:10px; font-weight:bold; font-size:12px;">Options avancées :</div>
+                                <div class="toggle-row"><span>Protéines</span><input type="checkbox" onchange="toggle('p-${m}', this.checked)"></div>
+                                <div id="p-${m}" class="sub-section"><div class="multi-select">${DB.items['Protéines'].map(p=>`<label class="chip"><input type="checkbox"><span>${p}</span></label>`).join('')}</div></div>
+                                <div class="toggle-row"><span>Légumes</span><input type="checkbox" onchange="toggle('l-${m}', this.checked)"></div>
+                                <div id="l-${m}" class="sub-section"><div class="multi-select">${DB.items['Légumes'].map(l=>`<label class="chip"><input type="checkbox"><span>${l}</span></label>`).join('')}</div></div>
+                                <div class="toggle-row"><span>Pain</span><input type="checkbox" onchange="toggle('pn-${m}', this.checked)"></div>
+                                <div id="pn-${m}" class="sub-section"><div class="multi-select">${DB.items['Pain'].map(pn=>`<label class="chip"><input type="checkbox"><span>${pn}</span></label>`).join('')}</div></div>
+                            ` : ''}
+                        </div>`;
                 });
-                container.innerHTML += h + `</div>`;
+                fCont.innerHTML += h + `</div>`;
             });
 
-            // Build Exercises
-            const exList = document.getElementById('exerciseList');
-            config.exercises.forEach(ex => {
-                exList.innerHTML += `<div class="toggle-row"><span>${ex.l}</span><select id="ex-${ex.id}" style="width:100px; margin:0"><option value="">Non</option><option>Oui</option></select></div>`;
+            // Build Sports
+            const sCont = document.getElementById('sportContainer');
+            DB.items['Sport'].forEach(s => {
+                sCont.innerHTML += `<div class="toggle-row"><span>${s}</span><select style="width:100px; margin:0"><option value="">Non</option><option>15min</option><option>30min</option><option>45min</option><option>1h</option><option>1h30</option><option>2h+</option></select></div>`;
             });
 
-            // Build Weight Selects
-            for(let i=60; i<=130; i++) document.getElementById('wK').innerHTML += `<option value="${i}">${i} kg</option>`;
-            for(let i=0; i<=9; i++) document.getElementById('wG').innerHTML += `<option value="${i}">,${i}</option>`;
-
-            // Load Goals
-            document.getElementById('startWeight').value = localStorage.getItem('bimStart') || 80;
-            document.getElementById('targetWeight').value = localStorage.getItem('bimTarget') || 75;
+            // Weight selects
+            for(let i=60; i<=130; i++) document.getElementById('wK').innerHTML += `<option value="${i}">${i}</option>`;
+            for(let i=0; i<=9; i++) document.getElementById('wG').innerHTML += `<option value="${i}">${i}</option>`;
             
             document.getElementById('logDate').valueAsDate = new Date();
-            initHome();
         });
 
-        function toggleBox(id) { document.getElementById('box-'+id).style.display = document.getElementById('chk-'+id).checked ? 'block' : 'none'; }
+        function toggle(id, show) { document.getElementById(id).style.display = show ? 'block' : 'none'; }
 
-        function saveGoals() {
-            localStorage.setItem('bimStart', document.getElementById('startWeight').value);
-            localStorage.setItem('bimTarget', document.getElementById('targetWeight').value);
-            alert("Objectifs enregistrés !");
-            initHome();
-        }
-
-        function initHome() {
-            const data = JSON.parse(localStorage.getItem('bimLogs') || '{}');
-            const dates = Object.keys(data).sort();
-            if(dates.length > 0) {
-                const last = data[dates[dates.length-1]];
-                document.getElementById('quickStats').innerHTML = `Dernier poids : <b>${last.weight} kg</b><br>Sommeil : ${last.sleep}h`;
-            }
-            renderChart(data);
-        }
-
-        function renderChart(data) {
-            const canvas = document.getElementById('weightChart');
-            const ctx = canvas.getContext('2d');
-            const dates = Object.keys(data).sort().slice(-7);
-            const weights = dates.map(d => parseFloat(data[d].weight));
-            const target = parseFloat(localStorage.getItem('bimTarget') || 0);
-
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            if(weights.length < 2) return;
-
-            const min = Math.min(...weights, target) - 1;
-            const max = Math.max(...weights) + 1;
-
-            ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 4; ctx.beginPath();
-            weights.forEach((w, i) => {
-                const x = (i / (weights.length-1)) * canvas.width;
-                const y = canvas.height - ((w - min) / (max - min)) * canvas.height;
-                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-            });
-            ctx.stroke();
-            
-            // Target line
-            ctx.setLineDash([5, 5]); ctx.strokeStyle = '#32d74b'; ctx.beginPath();
-            const targetY = canvas.height - ((target - min) / (max - min)) * canvas.height;
-            ctx.moveTo(0, targetY); ctx.lineTo(canvas.width, targetY); ctx.stroke();
-            ctx.setLineDash([]);
-        }
-
-        document.getElementById('bimForm').onsubmit = (e) => {
+        document.getElementById('ultraForm').onsubmit = (e) => {
             e.preventDefault();
             const date = document.getElementById('logDate').value;
-            const entry = {
-                weight: document.getElementById('wK').value + '.' + document.getElementById('wG').value,
-                sleep: document.getElementById('sleepTime').value,
-                comment: document.getElementById('comment').value
-            };
-            const all = JSON.parse(localStorage.getItem('bimLogs') || '{}');
-            all[date] = entry;
-            localStorage.setItem('bimLogs', JSON.stringify(all));
-            switchTab('home');
+            const weight = document.getElementById('wK').value + '.' + document.getElementById('wG').value;
+            const data = JSON.parse(localStorage.getItem('bimUltraLogs') || '{}');
+            data[date] = { weight, sleep: document.getElementById('sleepHours').value };
+            localStorage.setItem('bimUltraLogs', JSON.stringify(data));
+            alert("Données BIM enregistrées !");
+            location.reload();
         };
     </script>
 </body>
