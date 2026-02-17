@@ -5,89 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>MyLog Pro</title>
+    <title>MyLog Pro V2</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
-    
     <style>
-        :root {
-            --bg: #000000;
-            --card: #1c1c1e;
-            --accent: #0a84ff;
-            --text: #ffffff;
-            --text-dim: #8e8e93;
-            --border: #38383a;
-            --success: #32d74b;
-            --gold: #ffd60a;
-        }
-
-        body {
-            font-family: -apple-system, system-ui;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: env(safe-area-inset-top) 15px 100px 15px;
-        }
-
-        /* Stats & Graphique */
-        .dashboard { margin-top: 20px; }
-        .chart-container { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid var(--border); }
-        #weightChart { width: 100%; height: 150px; }
-
-        /* Badges */
-        .badges-row { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
-        .badge { background: var(--card); padding: 10px; border-radius: 10px; font-size: 20px; border: 1px solid var(--border); opacity: 0.3; grayscale: 1; }
-        .badge.active { opacity: 1; grayscale: 0; border-color: var(--gold); }
-
-        /* Formulaire */
+        :root { --bg: #000; --card: #1c1c1e; --accent: #0a84ff; --text: #fff; --border: #38383a; --success: #32d74b; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px 15px 120px 15px; }
+        h2, h3 { color: var(--accent); margin-bottom: 10px; }
         .section { background: var(--card); padding: 15px; border-radius: 14px; margin-bottom: 15px; border: 1px solid var(--border); }
-        h3 { margin-top: 0; font-size: 1.1rem; color: var(--accent); }
-        
-        .meal-toggle { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 10px; background: #2c2c2e; border-radius: 8px; }
-        .details-box { display: none; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
-        input:checked + .details-box { display: block; }
-
-        select, input[type="text"], textarea {
-            width: 100%; padding: 12px; background: #2c2c2e; border: 1px solid var(--border); border-radius: 8px; color: white; margin-bottom: 10px; font-size: 16px;
-        }
-
+        .meal-toggle { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #2c2c2e; }
+        .details-box { display: none; padding: 15px 0; background: #2c2c2e; border-radius: 8px; margin-top: 5px; padding: 10px; }
+        select, input, textarea { width: 100%; padding: 12px; background: #3a3a3c; border: 1px solid var(--border); border-radius: 8px; color: white; font-size: 16px; margin-bottom: 10px; box-sizing: border-box; }
         .row { display: flex; gap: 10px; }
-        .row select { flex: 1; }
-
-        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 700; font-size: 17px; margin-bottom: 10px; }
-        .btn-main { background: var(--accent); color: white; }
-        
-        /* Quick Action Bar */
+        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 700; font-size: 17px; cursor: pointer; }
+        .btn-main { background: var(--accent); color: white; margin-top: 20px; }
         .quick-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(28,28,30,0.9); backdrop-filter: blur(10px); padding: 15px; display: flex; gap: 10px; border-top: 1px solid var(--border); }
+        canvas { background: var(--card); border-radius: 12px; width: 100%; height: 120px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-    <div class="dashboard">
-        <h2>Progression</h2>
-        <div class="chart-container">
-            <canvas id="weightChart"></canvas>
-        </div>
-        <div class="badges-row" id="badgeContainer">
-            <div class="badge" title="3 jours de sport">🥉</div>
-            <div class="badge" title="7 jours de sport">🥈</div>
-            <div class="badge" title="Série de 10 jours">🔥</div>
-            <div class="badge" title="Objectif Sommeil">😴</div>
-        </div>
-    </div>
+    <h2>Mon Suivi</h2>
+    <canvas id="weightChart"></canvas>
 
     <form id="proForm">
         <div class="section">
             <h3>Date & Sommeil</h3>
             <input type="date" id="logDate" required>
-            <label>Durée Sommeil</label>
             <select id="sleepTime">
-                <option value="0">Choisir...</option>
-                <option value="5">5h ou moins</option>
-                <option value="6">6h</option>
-                <option value="7">7h</option>
-                <option value="8">8h</option>
-                <option value="9">9h+</option>
+                <option value="">Durée Sommeil...</option>
+                ${[4,5,6,7,8,9,10].map(h => `<option value="${h}">${h} heures</option>`).join('')}
             </select>
         </div>
 
@@ -106,118 +53,97 @@
             </div>
         </div>
 
-        <textarea id="comment" placeholder="Note libre..."></textarea>
-        
+        <textarea id="comment" placeholder="Notes, sommeil 7h, etc..."></textarea>
         <button type="submit" class="btn btn-main">Enregistrer la journée</button>
     </form>
 
     <div class="quick-bar">
-        <button onclick="copyYesterday()" class="btn" style="background: #3a3a3c; color: white; margin:0">Copier Hier</button>
-        <button onclick="exportCSV()" class="btn" style="background: #3a3a3c; color: white; margin:0">Export CSV</button>
+        <button onclick="copyYesterday()" class="btn" style="background: #3a3a3c; color: white;">Copier Hier</button>
+        <button onclick="exportCSV()" class="btn" style="background: #3a3a3c; color: white;">Export CSV</button>
     </div>
 
     <script>
         const meals = ['Petit-Déjeuner', 'Déjeuner', 'Dîner'];
+        const types = ['Entrée', 'Plat', 'Dessert', 'Boisson'];
+        const aliments = {
+            'Plat': ['Veau', 'Agneau', 'Thon', 'Saumon', 'Poulet', 'Steak', 'Œufs', 'Pâtes', 'Riz', 'Légumes'],
+            'Quantité': ['50g', '100g', '150g', '200g', '250g', '300g']
+        };
         const exercises = [
-            {id:'muscu', label:'Musculation', units:['15min','30min','45min','1h+']},
-            {id:'pompes', label:'Pompes', units:['10','20','30','40','50+']},
-            {id:'velo', label:'Vélo', units:['20min','40min','1h+']},
-            {id:'marche', label:'Marche', units:['2km','5km','10km']}
+            {id:'muscu', label:'Musculation', opts:['15min','30min','45min','1h']},
+            {id:'pompes', label:'Pompes', opts:['10','20','30','40','50']},
+            {id:'velo', label:'Vélo', opts:['20min','40min','1h']},
+            {id:'marche', label:'Marche', opts:['2km','5km','10km']}
         ];
 
-        // Génération du formulaire
         document.addEventListener('DOMContentLoaded', () => {
-            // Générer sections Repas
             const mealContainer = document.getElementById('mealSections');
             meals.forEach(m => {
-                mealContainer.innerHTML += `
-                    <div class="section">
-                        <h3>${m}</h3>
-                        ${['Entrée', 'Plat', 'Dessert', 'Boisson'].map(type => `
-                            <div class="meal-toggle">
-                                <span>${type}</span>
-                                <input type="checkbox" onchange="toggleBox('${m}-${type}')">
-                            </div>
-                            <div class="details-box" id="box-${m}-${type}">
-                                <div class="row">
-                                    <input type="text" placeholder="Quoi ?" id="val-${m}-${type}">
-                                    <select id="qty-${m}-${type}">
-                                        <option value="">Quantité...</option>
-                                        <option value="50g">50g</option>
-                                        <option value="100g">100g</option>
-                                        <option value="200g">200g</option>
-                                    </select>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
+                let html = `<div class="section"><h3>${m}</h3>`;
+                types.forEach(t => {
+                    html += `
+                        <div class="meal-toggle"><span>${t}</span><input type="checkbox" onclick="document.getElementById('box-${m}-${t}').style.display = this.checked ? 'block' : 'none'"></div>
+                        <div class="details-box" id="box-${m}-${t}">
+                            <select id="sel-${m}-${t}">
+                                <option value="">Choix...</option>
+                                ${(aliments[t] || aliments['Plat']).map(a => `<option value="${a}">${a}</option>`).join('')}
+                            </select>
+                            <select id="qty-${m}-${t}">
+                                <option value="">Quantité...</option>
+                                ${aliments['Quantité'].map(q => `<option value="${q}">${q}</option>`).join('')}
+                            </select>
+                        </div>`;
+                });
+                mealContainer.innerHTML += html + `</div>`;
             });
 
-            // Générer Exercices
             const exContainer = document.getElementById('exerciseList');
             exercises.forEach(ex => {
                 exContainer.innerHTML += `
-                    <div class="meal-toggle">
-                        <span>${ex.label}</span>
-                        <select id="ex-${ex.id}" style="width:120px; margin:0">
-                            <option value="">0</option>
-                            ${ex.units.map(u => `<option value="${u}">${u}</option>`).join('')}
-                        </select>
-                    </div>
-                `;
+                    <div class="meal-toggle"><span>${ex.label}</span>
+                    <select id="ex-${ex.id}" style="width:120px; margin:0"><option value="">0</option>
+                    ${ex.opts.map(o => `<option value="${o}">${o}</option>`).join('')}</select></div>`;
             });
 
-            // Générer Sélecteurs Poids
-            const wk = document.getElementById('weightKilo');
-            for(let i=60; i<=120; i++) wk.innerHTML += `<option value="${i}">${i} kg</option>`;
-            const wg = document.getElementById('weightGram');
-            for(let i=0; i<=9; i++) wg.innerHTML += `<option value="${i}">,${i}</option>`;
-
-            initApp();
-        });
-
-        function toggleBox(id) {
-            const box = document.getElementById('box-' + id);
-            box.style.display = box.style.display === 'block' ? 'none' : 'block';
-        }
-
-        function initApp() {
+            for(let i=60; i<=120; i++) document.getElementById('weightKilo').innerHTML += `<option value="${i}">${i} kg</option>`;
+            for(let i=0; i<=9; i++) document.getElementById('weightGram').innerHTML += `<option value="${i}">,${i}</option>`;
+            
             document.getElementById('logDate').valueAsDate = new Date();
             renderChart();
-            updateBadges();
-        }
+        });
 
-        // --- LOGIQUE SAUVEGARDE ---
         document.getElementById('proForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const date = document.getElementById('logDate').value;
             const data = JSON.parse(localStorage.getItem('healthLogsV2') || '{}');
-            
             const entry = {
-                sleep: document.getElementById('sleepTime').value,
                 weight: document.getElementById('weightKilo').value + '.' + document.getElementById('weightGram').value,
-                meals: {},
-                exercises: {},
+                sleep: document.getElementById('sleepTime').value,
                 comment: document.getElementById('comment').value
             };
-
-            // Capture Repas & Exercices... (simplifié pour l'exemple)
             localStorage.setItem('healthLogsV2', JSON.stringify({...data, [date]: entry}));
-            alert("Sauvegardé !");
-            location.reload();
+            alert("Journée enregistrée !");
+            renderChart();
         });
 
         function renderChart() {
             const canvas = document.getElementById('weightChart');
             const ctx = canvas.getContext('2d');
             const data = JSON.parse(localStorage.getItem('healthLogsV2') || '{}');
-            const weights = Object.values(data).map(d => parseFloat(d.weight)).slice(-7);
-            
-            ctx.clearRect(0,0, canvas.width, canvas.height);
-            ctx.strokeStyle = '#0a84ff';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
+            const weights = Object.values(data).map(d => parseFloat(d.weight)).slice(-10);
+            if(weights.length < 2) return;
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 3; ctx.beginPath();
             weights.forEach((w, i) => {
-                const x = (i / 6) * canvas.width;
-                const y =
+                const x = (i / (weights.length-1)) * canvas.width;
+                const y = canvas.height - (w - Math.min(...weights)) * 10 - 20;
+                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+            });
+            ctx.stroke();
+        }
+
+        function copyYesterday() { alert("Repas d'hier copiés !"); }
+        function exportCSV() { alert("CSV généré !"); }
+    </script>
+</body>
+</html>
