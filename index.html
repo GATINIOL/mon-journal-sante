@@ -5,93 +5,136 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>MyLog Pro V2</title>
+    <title>MyLog Ultra</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <style>
         :root { --bg: #000; --card: #1c1c1e; --accent: #0a84ff; --text: #fff; --border: #38383a; --success: #32d74b; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px 15px 120px 15px; }
-        h2, h3 { color: var(--accent); margin-bottom: 10px; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; }
+        
+        /* Navigation par Onglets */
+        .tab-content { display: none; padding: 20px 15px; }
+        .tab-content.active { display: block; }
+        
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: rgba(28,28,30,0.95); backdrop-filter: blur(10px); display: flex; border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); z-index: 1000; }
+        .nav-item { flex: 1; text-align: center; padding: 15px; color: var(--text-dim); font-size: 12px; cursor: pointer; }
+        .nav-item.active { color: var(--accent); font-weight: bold; }
+
+        /* Styles Graphiques & Cartes */
         .section { background: var(--card); padding: 15px; border-radius: 14px; margin-bottom: 15px; border: 1px solid var(--border); }
-        .meal-toggle { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #2c2c2e; }
-        .details-box { display: none; padding: 15px 0; background: #2c2c2e; border-radius: 8px; margin-top: 5px; padding: 10px; }
-        select, input, textarea { width: 100%; padding: 12px; background: #3a3a3c; border: 1px solid var(--border); border-radius: 8px; color: white; font-size: 16px; margin-bottom: 10px; box-sizing: border-box; }
-        .row { display: flex; gap: 10px; }
-        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 700; font-size: 17px; cursor: pointer; }
-        .btn-main { background: var(--accent); color: white; margin-top: 20px; }
-        .quick-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(28,28,30,0.9); backdrop-filter: blur(10px); padding: 15px; display: flex; gap: 10px; border-top: 1px solid var(--border); }
-        canvas { background: var(--card); border-radius: 12px; width: 100%; height: 120px; margin-bottom: 15px; }
+        h2 { color: var(--text); margin-left: 5px; }
+        canvas { background: var(--card); border-radius: 12px; width: 100%; height: 180px; margin-bottom: 15px; }
+
+        /* Formulaire */
+        .meal-toggle { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #2c2c2e; }
+        .details-box { display: none; padding: 10px; background: #2c2c2e; border-radius: 8px; margin-top: 5px; }
+        select, input, textarea { width: 100%; padding: 12px; background: #3a3a3c; border: 1px solid var(--border); border-radius: 8px; color: white; font-size: 16px; margin-bottom: 8px; box-sizing: border-box; }
+        .row { display: flex; gap: 8px; }
+        
+        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 700; font-size: 17px; background: var(--accent); color: white; margin-top: 10px; }
+        
+        .history-card { background: var(--card); padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1px solid var(--border); font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <h2>Mon Suivi</h2>
-    <canvas id="weightChart"></canvas>
-
-    <form id="proForm">
+    <div id="tab-home" class="tab-content active">
+        <h2>Évolution</h2>
+        <canvas id="weightChart"></canvas>
+        
         <div class="section">
-            <h3>Date & Sommeil</h3>
-            <input type="date" id="logDate" required>
-            <select id="sleepTime">
-                <option value="">Durée Sommeil...</option>
-                ${[4,5,6,7,8,9,10].map(h => `<option value="${h}">${h} heures</option>`).join('')}
-            </select>
+            <h3>Dernières saisies</h3>
+            <div id="historyList"></div>
         </div>
+    </div>
 
-        <div id="mealSections"></div>
-
-        <div class="section">
-            <h3>Exercices</h3>
-            <div id="exerciseList"></div>
-        </div>
-
-        <div class="section">
-            <h3>Poids</h3>
-            <div class="row">
-                <select id="weightKilo"></select>
-                <select id="weightGram"></select>
+    <div id="tab-log" class="tab-content">
+        <h2>Nouvelle Saisie</h2>
+        <form id="proForm">
+            <div class="section">
+                <input type="date" id="logDate" required>
+                <select id="sleepTime">
+                    <option value="">Durée Sommeil...</option>
+                    ${[4,5,6,7,8,9,10].map(h => `<option value="${h}">${h} heures</option>`).join('')}
+                </select>
             </div>
-        </div>
 
-        <textarea id="comment" placeholder="Notes, sommeil 7h, etc..."></textarea>
-        <button type="submit" class="btn btn-main">Enregistrer la journée</button>
-    </form>
+            <div id="mealSections"></div>
 
-    <div class="quick-bar">
-        <button onclick="copyYesterday()" class="btn" style="background: #3a3a3c; color: white;">Copier Hier</button>
-        <button onclick="exportCSV()" class="btn" style="background: #3a3a3c; color: white;">Export CSV</button>
+            <div class="section">
+                <h3>Exercices</h3>
+                <div id="exerciseList"></div>
+            </div>
+
+            <div class="section">
+                <h3>Poids</h3>
+                <div class="row">
+                    <select id="weightKilo"></select>
+                    <select id="weightGram"></select>
+                </div>
+            </div>
+
+            <textarea id="comment" placeholder="Notes..."></textarea>
+            <button type="submit" class="btn">Enregistrer</button>
+        </form>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="switchTab('home')">🏠 Accueil</div>
+        <div class="nav-item" onclick="switchTab('log')">➕ Saisir</div>
     </div>
 
     <script>
+        // --- CONFIGURATION ---
         const meals = ['Petit-Déjeuner', 'Déjeuner', 'Dîner'];
-        const types = ['Entrée', 'Plat', 'Dessert', 'Boisson'];
+        const types = ['Entrée', 'Plat', 'Fromage', 'Salade', 'Dessert', 'Boisson'];
         const aliments = {
+            'Entrée': ['Saucisson', 'Paté'],
             'Plat': ['Veau', 'Agneau', 'Thon', 'Saumon', 'Poulet', 'Steak', 'Œufs', 'Pâtes', 'Riz', 'Légumes'],
-            'Quantité': ['50g', '100g', '150g', '200g', '250g', '300g']
+            'Fromage': ['Comte', 'Chinois', 'Cancoillote'],
+            'Boisson': ['Eau', 'Bière', 'Vin rouge'],
+            'Salade': ['Verte', 'Tomates', 'Mixte'],
+            'Dessert': ['Fruit', 'Yaourt', 'Chocolat']
+        };
+        const quantites = {
+            'Entrée': ['50g', '100g', '150g'],
+            'Plat': ['50g', '100g', '200g', '300g'],
+            'Fromage': ['1 tranche', '2 tranches'],
+            'Boisson': ['15cl', '20cl', '1L'],
+            'Default': ['Petite', 'Moyenne', 'Grande']
         };
         const exercises = [
             {id:'muscu', label:'Musculation', opts:['15min','30min','45min','1h']},
             {id:'pompes', label:'Pompes', opts:['10','20','30','40','50']},
             {id:'velo', label:'Vélo', opts:['20min','40min','1h']},
+            {id:'rugby', label:'Rugby', opts:['20min','40min','1h']},
             {id:'marche', label:'Marche', opts:['2km','5km','10km']}
         ];
 
+        // --- NAVIGATION ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            if(tabId === 'home') renderHome();
+        }
+
+        // --- GENERATION FORMULAIRE ---
         document.addEventListener('DOMContentLoaded', () => {
             const mealContainer = document.getElementById('mealSections');
             meals.forEach(m => {
                 let html = `<div class="section"><h3>${m}</h3>`;
                 types.forEach(t => {
+                    const qList = quantites[t] || quantites['Default'];
+                    const aList = aliments[t] || ['Standard'];
                     html += `
-                        <div class="meal-toggle"><span>${t}</span><input type="checkbox" onclick="document.getElementById('box-${m}-${t}').style.display = this.checked ? 'block' : 'none'"></div>
+                        <div class="meal-toggle"><span>${t}</span><input type="checkbox" onclick="toggleDetails('${m}-${t}', this.checked)"></div>
                         <div class="details-box" id="box-${m}-${t}">
-                            <select id="sel-${m}-${t}">
-                                <option value="">Choix...</option>
-                                ${(aliments[t] || aliments['Plat']).map(a => `<option value="${a}">${a}</option>`).join('')}
-                            </select>
-                            <select id="qty-${m}-${t}">
-                                <option value="">Quantité...</option>
-                                ${aliments['Quantité'].map(q => `<option value="${q}">${q}</option>`).join('')}
-                            </select>
+                            <div class="row">
+                                <select id="sel-${m}-${t}"><option value="">Choix...</option>${aList.map(a => `<option value="${a}">${a}</option>`).join('')}</select>
+                                <select id="qty-${m}-${t}"><option value="">Qté...</option>${qList.map(q => `<option value="${q}">${q}</option>`).join('')}</select>
+                            </div>
                         </div>`;
                 });
                 mealContainer.innerHTML += html + `</div>`;
@@ -101,49 +144,68 @@
             exercises.forEach(ex => {
                 exContainer.innerHTML += `
                     <div class="meal-toggle"><span>${ex.label}</span>
-                    <select id="ex-${ex.id}" style="width:120px; margin:0"><option value="">0</option>
-                    ${ex.opts.map(o => `<option value="${o}">${o}</option>`).join('')}</select></div>`;
+                    <select id="ex-${ex.id}" style="width:120px; margin:0"><option value="">0</option>${ex.opts.map(o => `<option value="${o}">${o}</option>`).join('')}</select></div>`;
             });
 
             for(let i=60; i<=120; i++) document.getElementById('weightKilo').innerHTML += `<option value="${i}">${i} kg</option>`;
             for(let i=0; i<=9; i++) document.getElementById('weightGram').innerHTML += `<option value="${i}">,${i}</option>`;
             
             document.getElementById('logDate').valueAsDate = new Date();
-            renderChart();
+            renderHome();
         });
 
+        function toggleDetails(id, show) { document.getElementById('box-' + id).style.display = show ? 'block' : 'none'; }
+
+        // --- DATA & DASHBOARD ---
         document.getElementById('proForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const date = document.getElementById('logDate').value;
-            const data = JSON.parse(localStorage.getItem('healthLogsV2') || '{}');
+            const data = JSON.parse(localStorage.getItem('healthLogsV3') || '{}');
+            
             const entry = {
                 weight: document.getElementById('weightKilo').value + '.' + document.getElementById('weightGram').value,
                 sleep: document.getElementById('sleepTime').value,
-                comment: document.getElementById('comment').value
+                comment: document.getElementById('comment').value,
+                timestamp: Date.now()
             };
-            localStorage.setItem('healthLogsV2', JSON.stringify({...data, [date]: entry}));
-            alert("Journée enregistrée !");
-            renderChart();
+
+            data[date] = entry;
+            localStorage.setItem('healthLogsV3', JSON.stringify(data));
+            alert("Enregistré !");
+            switchTab('home');
         });
 
-        function renderChart() {
+        function renderHome() {
+            const data = JSON.parse(localStorage.getItem('healthLogsV3') || '{}');
+            const historyList = document.getElementById('historyList');
+            const sortedDates = Object.keys(data).sort().reverse().slice(0, 7);
+            
+            historyList.innerHTML = sortedDates.map(d => `
+                <div class="history-card"><strong>${d}</strong> : ${data[d].weight} kg | Sommeil: ${data[d].sleep}h</div>
+            `).join('') || "Aucune donnée";
+
+            renderChart(data);
+        }
+
+        function renderChart(data) {
             const canvas = document.getElementById('weightChart');
             const ctx = canvas.getContext('2d');
-            const data = JSON.parse(localStorage.getItem('healthLogsV2') || '{}');
-            const weights = Object.values(data).map(d => parseFloat(d.weight)).slice(-10);
+            const sortedDates = Object.keys(data).sort().slice(-10);
+            const weights = sortedDates.map(d => parseFloat(data[d].weight));
+            
             if(weights.length < 2) return;
             ctx.clearRect(0,0,canvas.width,canvas.height);
-            ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 3; ctx.beginPath();
+            ctx.strokeStyle = '#0a84ff'; ctx.lineWidth = 4; ctx.beginPath();
+            const minW = Math.min(...weights) - 1;
+            const maxW = Math.max(...weights) + 1;
+            
             weights.forEach((w, i) => {
-                const x = (i / (weights.length-1)) * canvas.width;
-                const y = canvas.height - (w - Math.min(...weights)) * 10 - 20;
+                const x = (i / (weights.length-1)) * (canvas.width - 40) + 20;
+                const y = canvas.height - ((w - minW) / (maxW - minW)) * (canvas.height - 40) - 20;
                 if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
             });
             ctx.stroke();
         }
-
-        function copyYesterday() { alert("Repas d'hier copiés !"); }
-        function exportCSV() { alert("CSV généré !"); }
     </script>
 </body>
 </html>
